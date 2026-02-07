@@ -1,22 +1,22 @@
-resource "azurerm_resource_group" "resource_group_dev" {
+module "resource_group" {
+  source = "./modules/resource_group"
   name = var.resource_group_name
   location = var.location
   tags = local.common_tags
 }
 
-resource "azurerm_virtual_network" "Vnet-dev" {
+module "vnet" {
+  source = "./modules/vnet"
   name = "${var.resource_group_name}-vnet"
-  location = var.location
-  resource_group_name = azurerm_resource_group.resource_group_dev.name
+  location = module.resource_group.location
+  resource_group_name = module.resource_group.name
   address_space = [var.vnet_cidr]
   tags = local.common_tags
 }
 
-resource "azurerm_subnet" "subnet-dev" {
-  for_each =  var.subnets
-
-  name = each.key
-  resource_group_name = azurerm_resource_group.resource_group_dev.name
-  virtual_network_name = azurerm_virtual_network.Vnet-dev.name
-  address_prefixes = [each.value.cidr]
+module "subnets" {
+  source = "./modules/subnet"
+  virtual_network_name = module.vnet.name
+  resource_group_name = module.resource_group.name
+  subnets = var.subnets
 }
